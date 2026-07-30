@@ -1,1 +1,466 @@
-<h1>Hello world</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Intsika Cloud n Code — build.deploy.support()</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e111c;
+  --bg-soft:#131828;
+  --surface:#1a2036;
+  --surface-2:#212843;
+  --border: rgba(226,232,255,0.09);
+  --border-hi: rgba(227,162,77,0.4);
+  --text:#e7eaf3;
+  --muted:#8a92ac;
+  --muted-2:#5d6580;
+  --amber:#e3a24d;
+  --amber-hi:#f4c579;
+  --cyan:#5fd0c0;
+  --purple:#b096f5;
+  --red:#e37d7d;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+  --disp:'Space Grotesk', sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(900px 500px at 85% -5%, rgba(227,162,77,0.07), transparent 60%),
+    radial-gradient(700px 450px at 0% 15%, rgba(95,208,192,0.05), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--disp);
+  line-height:1.6;
+}
+a{color:inherit; text-decoration:none;}
+.wrap{max-width:1200px; margin:0 auto; padding:0 28px;}
+.mono{font-family:var(--mono);}
+
+/* cursor blink */
+.cursor{
+  display:inline-block; width:8px; height:1.1em; background:var(--amber);
+  vertical-align:text-bottom; animation:blink 1.1s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0;}}
+@media (prefers-reduced-motion: reduce){ .cursor{animation:none; opacity:1;} }
+
+/* ---------------- NAV (tab bar) ---------------- */
+.tabbar{
+  position:sticky; top:0; z-index:60;
+  background:rgba(14,17,28,0.88);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.tabbar .wrap{display:flex; align-items:center; gap:26px; padding:14px 28px;}
+.dots{display:flex; gap:7px;}
+.dots span{width:10px; height:10px; border-radius:50%; display:block;}
+.dots span:nth-child(1){background:#e37d7d;}
+.dots span:nth-child(2){background:#e3c94d;}
+.dots span:nth-child(3){background:#6bd08a;}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-word{font-family:var(--mono); font-weight:700; font-size:1.02rem; color:var(--text);}
+.brand-word .dim{color:var(--muted); font-weight:500;}
+.tabs{display:flex; gap:2px; margin-left:6px; font-family:var(--mono); font-size:0.86rem;}
+.tabs a{
+  padding:8px 14px; color:var(--muted); border-bottom:2px solid transparent;
+  transition:color .18s, border-color .18s;
+}
+.tabs a:hover{color:var(--text);}
+.tabs a .ext{color:var(--muted-2);}
+.tab-run{
+  margin-left:auto;
+  font-family:var(--mono); font-size:0.82rem; font-weight:600;
+  color:#0e111c;
+  background:linear-gradient(135deg, var(--amber-hi), var(--amber));
+  padding:9px 18px; border-radius:6px;
+  box-shadow:0 8px 22px -8px rgba(227,162,77,0.55);
+}
+@media (max-width:920px){ .tabs{display:none;} }
+
+/* ---------------- HERO ---------------- */
+.hero{
+  padding:78px 0 60px;
+  display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;
+}
+@media (max-width:960px){ .hero{grid-template-columns:1fr;} }
+
+.eyebrow{
+  font-family:var(--mono); font-size:0.8rem; color:var(--cyan);
+  display:inline-flex; align-items:center; gap:9px; margin-bottom:18px;
+}
+.eyebrow::before{content:"//"; color:var(--muted-2);}
+
+.hero h1{
+  font-size:clamp(2.1rem, 4vw, 3.1rem);
+  font-weight:700; line-height:1.14; letter-spacing:-0.01em;
+  margin-bottom:20px;
+}
+.hero h1 .accent{color:var(--amber-hi);}
+.hero p.lede{color:var(--muted); font-size:1.03rem; max-width:50ch; margin-bottom:32px;}
+
+.btn-row{display:flex; gap:14px; flex-wrap:wrap;}
+.btn{
+  font-family:var(--mono); font-size:0.88rem; font-weight:600;
+  padding:13px 20px; border-radius:7px;
+  display:inline-flex; align-items:center; gap:8px;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.btn-primary{
+  background:linear-gradient(135deg, var(--amber-hi), var(--amber));
+  color:#171308;
+  box-shadow:0 10px 26px -8px rgba(227,162,77,0.5);
+}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-ghost{border:1px solid var(--border); color:var(--text);}
+.btn-ghost:hover{border-color:var(--border-hi); color:var(--amber-hi);}
+.btn-ghost::before{content:"$"; color:var(--muted-2);}
+.btn-primary::before{content:"❯"; color:#171308; opacity:0.7;}
+
+/* editor mock */
+.editor{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,0.55);
+}
+.editor-bar{
+  display:flex; align-items:center; gap:16px;
+  padding:12px 16px;
+  background:var(--surface-2);
+  border-bottom:1px solid var(--border);
+}
+.editor-bar .fname{font-family:var(--mono); font-size:0.8rem; color:var(--muted);}
+.editor-body{padding:22px 20px; font-family:var(--mono); font-size:0.86rem; overflow-x:auto;}
+.editor-body .ln{color:var(--muted-2); display:inline-block; width:22px; user-select:none;}
+.editor-body .row{white-space:pre;}
+.tok-com{color:var(--muted); font-style:italic;}
+.tok-kw{color:var(--purple);}
+.tok-str{color:var(--cyan);}
+.tok-fn{color:var(--amber-hi);}
+.tok-plain{color:var(--text);}
+.terminal-strip{
+  border-top:1px solid var(--border);
+  padding:12px 20px;
+  font-family:var(--mono); font-size:0.8rem; color:var(--cyan);
+  background:var(--bg-soft);
+}
+.terminal-strip .ok{color:#6bd08a;}
+
+/* ---------------- SECTIONS ---------------- */
+section{padding:80px 0;}
+.divider{border:none; height:1px; background:var(--border);}
+.section-head{max-width:640px; margin-bottom:48px;}
+.section-head h2{font-size:clamp(1.6rem,2.8vw,2.15rem); font-weight:700; margin-top:10px;}
+.section-head p{color:var(--muted); margin-top:12px;}
+
+/* about */
+.about{display:grid; grid-template-columns:0.85fr 1.15fr; gap:50px;}
+@media (max-width:880px){ .about{grid-template-columns:1fr;} }
+.comment-block{
+  font-family:var(--mono); font-size:0.95rem; color:var(--muted);
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:22px; line-height:1.8;
+}
+.comment-block .amber{color:var(--amber-hi);}
+.about-body p{color:var(--muted); margin-bottom:14px;}
+.about-body strong{color:var(--text);}
+
+/* services as file cards */
+.file-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+@media (max-width:920px){ .file-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:600px){ .file-grid{grid-template-columns:1fr;} }
+.file-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  overflow:hidden; transition:border-color .2s, transform .2s;
+}
+.file-card:hover{border-color:var(--border-hi); transform:translateY(-3px);}
+.file-head{
+  display:flex; align-items:center; gap:8px;
+  padding:12px 16px; background:var(--surface-2); border-bottom:1px solid var(--border);
+  font-family:var(--mono); font-size:0.82rem; color:var(--amber-hi);
+}
+.file-head .dot{width:6px; height:6px; border-radius:50%; background:var(--cyan);}
+.file-body{padding:18px 16px;}
+.file-body h3{font-size:1.02rem; margin-bottom:8px;}
+.file-body p{font-size:0.9rem; color:var(--muted);}
+.file-body ul{margin-top:10px; padding-left:16px; font-size:0.85rem; color:var(--muted-2);}
+.file-body ul li{margin-bottom:4px;}
+
+/* stack as package.json */
+.pkg{
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  font-family:var(--mono); font-size:0.86rem; padding:24px; max-width:640px;
+  color:var(--text);
+}
+.pkg .k{color:var(--cyan);}
+.pkg .v{color:var(--amber-hi);}
+.pkg .p{color:var(--muted-2);}
+
+/* process as commit log */
+.log{border-top:1px solid var(--border);}
+.log-row{
+  display:grid; grid-template-columns:110px 1fr; gap:18px;
+  padding:20px 0; border-bottom:1px solid var(--border);
+  font-family:var(--mono); font-size:0.88rem;
+}
+.log-row .hash{color:var(--amber); }
+.log-row .msg strong{font-family:var(--disp); font-size:1rem; color:var(--text); display:block; margin-bottom:4px; font-weight:600;}
+.log-row .msg span{color:var(--muted); font-family:var(--disp); font-size:0.92rem;}
+
+/* cta */
+.cta-band{
+  text-align:center; padding:60px 32px; border-radius:14px;
+  background:linear-gradient(160deg, rgba(227,162,77,0.10), rgba(227,162,77,0.02));
+  border:1px solid var(--border);
+}
+.cta-band h2{font-size:clamp(1.5rem,3vw,2.05rem); margin-bottom:14px; font-weight:700;}
+.cta-band p{color:var(--muted); max-width:56ch; margin:0 auto 28px;}
+
+/* footer */
+footer{border-top:1px solid var(--border); padding:40px 0 26px; font-size:0.85rem; color:var(--muted-2);}
+.footer-top{display:flex; justify-content:space-between; flex-wrap:wrap; gap:22px; margin-bottom:22px;}
+.footer-links{display:flex; gap:20px; flex-wrap:wrap; font-family:var(--mono); font-size:0.82rem;}
+.footer-links a:hover{color:var(--amber-hi);}
+.footer-bottom{display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding-top:16px; border-top:1px solid var(--border); font-family:var(--mono); font-size:0.75rem;}
+
+:focus-visible{outline:2px solid var(--amber-hi); outline-offset:3px;}
+</style>
+</head>
+<body>
+
+<div class="tabbar">
+  <div class="wrap">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <rect x="0.5" y="0.5" width="29" height="29" rx="7" fill="#1a2036" stroke="rgba(227,162,77,0.4)"/>
+        <text x="15" y="20" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" text-anchor="middle" fill="#e3a24d">&gt;_</text>
+      </svg>
+      <span class="brand-word">intsika<span class="dim">.cloudncode</span></span>
+    </div>
+    <div class="tabs">
+      <a href="#about">about<span class="ext">.tsx</span></a>
+      <a href="#services">services<span class="ext">.tsx</span></a>
+      <a href="#stack">stack<span class="ext">.json</span></a>
+      <a href="#process">process<span class="ext">.log</span></a>
+    </div>
+    <a href="#contact" class="tab-run">▸ Run consultation</a>
+  </div>
+</div>
+
+<header class="hero wrap">
+  <div>
+    <span class="eyebrow">south african software studio</span>
+    <h1>We ship <span class="accent">pillars</span>,<br>not prototypes.</h1>
+    <p class="lede">
+      Intsika means pillar — the thing a business stands on. We build web applications, business
+      systems, and automation on ASP.NET Razor Pages, Dapper and Python, engineered to hold real
+      weight from day one.
+    </p>
+    <div class="btn-row">
+      <a href="#contact" class="btn btn-primary">request-quote --free</a>
+      <a href="#services" class="btn btn-ghost">view-services</a>
+    </div>
+  </div>
+
+  <div class="editor">
+    <div class="editor-bar">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span class="fname">pillar.ts</span>
+    </div>
+    <div class="editor-body">
+<div class="row"><span class="ln">01</span><span class="tok-com">// Intsika = "pillar", isiXhosa</span></div>
+<div class="row"><span class="ln">02</span><span class="tok-kw">function</span> <span class="tok-fn">buildPillar</span><span class="tok-plain">(business) {</span></div>
+<div class="row"><span class="ln">03</span><span class="tok-plain">&nbsp; </span><span class="tok-kw">const</span><span class="tok-plain"> stack = [</span><span class="tok-str">"Razor Pages"</span><span class="tok-plain">, </span><span class="tok-str">"Dapper"</span><span class="tok-plain">, </span><span class="tok-str">"Python"</span><span class="tok-plain">];</span></div>
+<div class="row"><span class="ln">04</span><span class="tok-plain">&nbsp; </span><span class="tok-kw">return new</span> <span class="tok-fn">Foundation</span><span class="tok-plain">({</span></div>
+<div class="row"><span class="ln">05</span><span class="tok-plain">&nbsp;&nbsp; stack,</span></div>
+<div class="row"><span class="ln">06</span><span class="tok-plain">&nbsp;&nbsp; hosting: </span><span class="tok-str">"azure"</span><span class="tok-plain">,</span></div>
+<div class="row"><span class="ln">07</span><span class="tok-plain">&nbsp;&nbsp; support: </span><span class="tok-str">"ongoing"</span><span class="tok-plain">,</span></div>
+<div class="row"><span class="ln">08</span><span class="tok-plain">&nbsp; });</span></div>
+<div class="row"><span class="ln">09</span><span class="tok-plain">}</span></div>
+<div class="row">&nbsp;</div>
+<div class="row"><span class="ln">10</span><span class="tok-fn">buildPillar</span><span class="tok-plain">(yourBusiness);</span><span class="cursor"></span></div>
+    </div>
+    <div class="terminal-strip">$ deploying to production... <span class="ok">done ✓</span></div>
+  </div>
+</header>
+
+<main>
+
+  <section id="about">
+    <div class="wrap about">
+      <div class="comment-block">
+        /**<br>
+        &nbsp;* <span class="amber">@@studio</span> Intsika Cloud n Code<br>
+        &nbsp;* Based in South Africa.<br>
+        &nbsp;* Philosophy: build software that<br>
+        &nbsp;* creates value, saves time, and<br>
+        &nbsp;* supports business growth.<br>
+        &nbsp;*/
+      </div>
+      <div class="about-body">
+        <h2>Your trusted development partner</h2>
+        <p>We help businesses digitise the parts of their operation that still run on spreadsheets, sticky notes, and memory — <strong>inventory, bookings, sales, reporting</strong> — and turn them into software that just works.</p>
+        <p>No page builders, no templates pretending to be custom. Every application is written, reviewed, and shipped by our own developers, on a stack chosen for reliability over hype.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">what we build</span>
+        <h2>Six files. One business, fully covered.</h2>
+        <p>Each service below is a project we can open, build, and hand over.</p>
+      </div>
+      <div class="file-grid">
+
+        <div class="file-card">
+          <div class="file-head"><span class="dot"></span>WebApp.razor</div>
+          <div class="file-body">
+            <h3>Web Applications</h3>
+            <p>Secure, responsive apps built on ASP.NET Core Razor Pages and Dapper.</p>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-head"><span class="dot"></span>Business.cs</div>
+          <div class="file-body">
+            <h3>Business Management Systems</h3>
+            <p>Software tailored to how your business actually runs day to day.</p>
+            <ul>
+              <li>Inventory & stock control</li>
+              <li>Customer & employee records</li>
+              <li>Appointment booking</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-head"><span class="dot"></span>automate.py</div>
+          <div class="file-body">
+            <h3>Python Automation</h3>
+            <p>Scripts and tools that take repetitive work off your team's plate.</p>
+            <ul>
+              <li>Process automation</li>
+              <li>Data & reporting pipelines</li>
+              <li>API integrations</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-head"><span class="dot"></span>landing.html</div>
+          <div class="file-body">
+            <h3>Landing Pages</h3>
+            <p>Fast, focused pages built to turn visitors into leads.</p>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-head"><span class="dot"></span>store.checkout.ts</div>
+          <div class="file-body">
+            <h3>E-Commerce</h3>
+            <p>Product catalogues, secure payments, and order tracking, wired together.</p>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-head"><span class="dot"></span>deploy.azure.yml</div>
+          <div class="file-body">
+            <h3>Azure Cloud Hosting</h3>
+            <p>Hosting, SQL, SSL, backups, and monitoring, kept running and watched.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section id="stack">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">the stack</span>
+        <h2>What's under the hood</h2>
+      </div>
+      <div class="pkg">
+        <div><span class="p">{</span></div>
+        <div>&nbsp;&nbsp;<span class="k">"backend"</span>: [<span class="v">"Razor Pages"</span>, <span class="v">"C#"</span>, <span class="v">"Python"</span>],</div>
+        <div>&nbsp;&nbsp;<span class="k">"data"</span>: [<span class="v">"SQL Server"</span>, <span class="v">"Dapper"</span>],</div>
+        <div>&nbsp;&nbsp;<span class="k">"frontend"</span>: [<span class="v">"HTML5"</span>, <span class="v">"CSS3"</span>, <span class="v">"Bootstrap 5"</span>, <span class="v">"JavaScript"</span>],</div>
+        <div>&nbsp;&nbsp;<span class="k">"cloud"</span>: [<span class="v">"Microsoft Azure"</span>],</div>
+        <div>&nbsp;&nbsp;<span class="k">"tooling"</span>: [<span class="v">"Visual Studio"</span>, <span class="v">"Git"</span>, <span class="v">"GitHub"</span>]</div>
+        <div><span class="p">}</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section id="process">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">how we work</span>
+        <h2>git log --oneline --our-process</h2>
+      </div>
+      <div class="log">
+        <div class="log-row"><span class="hash">a1c9e2f</span><div class="msg"><strong>Consultation</strong><span>Discuss your business goals and what the software needs to do.</span></div></div>
+        <div class="log-row"><span class="hash">7b40d18</span><div class="msg"><strong>Planning</strong><span>Design the solution and lay out the project roadmap.</span></div></div>
+        <div class="log-row"><span class="hash">c592aa4</span><div class="msg"><strong>Development</strong><span>Build the application on modern, maintainable technology.</span></div></div>
+        <div class="log-row"><span class="hash">f0e7b31</span><div class="msg"><strong>Testing</strong><span>Every feature tested for reliability before it reaches you.</span></div></div>
+        <div class="log-row"><span class="hash">3d81c76</span><div class="msg"><strong>Deployment</strong><span>Ship it, securely, to production on Azure.</span></div></div>
+        <div class="log-row"><span class="hash">9f2a005</span><div class="msg"><strong>Support</strong><span>Stay on to maintain and improve the system over time.</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="cta-band">
+        <span class="eyebrow" style="justify-content:center;">get started</span>
+        <h2>Ready to build your next project?</h2>
+        <p>Tell us what your business needs — a website, a management system, or an automation tool — and we'll help you build the pillar it stands on.</p>
+        <a href="mailto:info@intsikacloudncode.co.za" class="btn btn-primary">request-consultation --free</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="brand"><span class="brand-word">intsika<span class="dim">.cloudncode</span></span></div>
+        <p style="margin-top:8px; max-width:38ch;">Your digital pillar. Built with code. Powered by innovation.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#about">about.tsx</a>
+        <a href="#services">services.tsx</a>
+        <a href="#stack">stack.json</a>
+        <a href="#process">process.log</a>
+        <a href="#contact">contact.sh</a>
+      </div>
+      <div>
+        <p>info@intsikacloudncode.co.za</p>
+        <p>South Africa</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Intsika Cloud n Code. All rights reserved.</span>
+      <span>exit 0</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
